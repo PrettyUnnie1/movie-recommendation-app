@@ -3,22 +3,33 @@ import axios from 'axios';
 
 function App() {
   const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleSubmit = async () => {
-    const res = await axios.post("http://localhost:5000/recommend", {
-      age: 3,
-      gender: 1,
-      occupation: 4,
-      genre: 5
-    });
-    setResult(res.data.score);
+    try {
+      setError(null);
+      const res = await axios.post("http://localhost:5000/recommend", {
+        user_id: 10,
+        item_id: 50,
+        gender: "M",
+        age: 25,
+        occupation: 3,
+        genre: "Action"
+      });
+      console.log("[✅ Backend response]:", res.data);  // ✅ In log rõ ràng
+      setResult(res.data.score);  // ✅ Hiển thị trên UI
+    } catch (err) {
+      console.error("[❌ Network Error]:", err);
+      setError("Something went wrong. Please try again.");
+    }
   };
-zzfgasf
+
   return (
-    <div>
-      <h2>Movie Recommender</h2>
+    <div style={{ padding: '2rem' }}>
+      <h2>🎬 Movie Recommender</h2>
       <button onClick={handleSubmit}>Get Recommendation</button>
-      {result && <p>Predicted Score: {result}</p>}
+      {result && <p>Predicted Score: <strong>{result.toFixed(4)}</strong></p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>
   );
 }

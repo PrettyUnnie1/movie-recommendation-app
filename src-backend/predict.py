@@ -2,14 +2,16 @@ import tensorflow as tf
 import numpy as np
 
 model = tf.keras.models.load_model('../data/deepfm_model.keras')
-
-def load_model_and_predict(user_input):
+print(model.input_names)
+def load_model_and_predict(data):
     
-    features = [
-        np.array([[user_input['age']]]),
-        np.array([[user_input['gender']]]),
-        np.array([[user_input['occupation']]]),
-        np.array([[user_input['genre']]]),
-    ]
+    features = {
+        "user_input": np.array([[data['user_id']]]),
+        "item_input": np.array([[data['item_id']]]),
+        "gender":     np.array([[data['gender']]]),
+        "age":        np.array([[data['age']]]),
+        "occupation": np.array([[data['occupation']]]),
+        "genre":      np.array([[data['genre']]])
+    }
     preds = model.predict(features)
     return {"score": float(preds[0][0])}
