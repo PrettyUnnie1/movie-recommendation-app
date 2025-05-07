@@ -8,6 +8,29 @@ function RecommendForm() {
   const [recommendations, setRecommendations] = useState([]);
   const [error, setError] = useState(null);
 
+  // Cập nhật hàm getPosterURL
+  const getPosterURL = async (title) => {
+    try {
+      // Loại bỏ năm khỏi tiêu đề phim, ví dụ: "Inception (2010)" => "Inception"
+      const cleanedTitle = title.replace(/\s*\(\d{4}\)$/, '');
+      
+      const res = await axios.get('https://api.themoviedb.org/3/search/movie', {
+        params: {
+          api_key: 'c24381c0a201e1fe30d94c02463bc6ca',
+          query: cleanedTitle
+        }
+      });
+
+      const posterPath = res.data.results[0]?.poster_path;
+      return posterPath ? `https://image.tmdb.org/t/p/w200${posterPath}` : null;
+    } catch (err) {
+      console.error(`[❌ TMDB Error]: Failed to get poster for ${title}`, err);
+      return null;
+    }
+  };
+
+  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -17,13 +40,23 @@ function RecommendForm() {
         age: Number(age),
         occupation: Number(occupation),
       });
-
-      setRecommendations(res.data.recommendations);
+  
+      const rawRecommendations = res.data.recommendations;
+  
+      const enriched = await Promise.all(
+        rawRecommendations.map(async ([title, score]) => {
+          const poster = await getPosterURL(title);
+          return { title, score, poster };
+        })
+      );
+  
+      setRecommendations(enriched);
     } catch (err) {
       console.error('[❌ Network Error]:', err);
       setError('Something went wrong. Please try again.');
     }
   };
+  
 
   return (
     <div>
@@ -80,17 +113,21 @@ function RecommendForm() {
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       {recommendations.length > 0 && (
-        <div>
-          <h3>Top Recommendations:</h3>
-          <ul>
-            {recommendations.map(([item, score], idx) => (
-              <li key={idx}>
-                {item} — Score: {score.toFixed(4)}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+          <div>
+            <h3>Top Recommendations:</h3>
+            <ul className="recommendation-list">
+              {recommendations.map(({ title, score, poster }, idx) => (
+                <li key={idx} className="recommendation-item">
+                  {poster && <img src={poster} alt={title} className="poster" />}
+                  <div>
+                    <strong>{title}</strong><br />
+                    Score: {score.toFixed(4)}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
     </div>
   );
 }
